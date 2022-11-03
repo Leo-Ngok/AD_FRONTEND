@@ -1,0 +1,59 @@
+image: node:16.17.1
+
+stages:
+  - build
+  - test
+  - coverage
+
+cache:
+  paths:
+    - node_modules/
+
+build site:
+  stage: build
+  script:
+    - npm install --progress=false
+    - npm run build
+
+unit test:
+  stage: test
+  allow_failure: true
+  before_script:
+    - npm install --progress=false
+  script:
+    - npm run test:unit
+  artifacts:
+    paths:
+      - dist/
+      - node_modules/
+      - package.json
+
+coverage test:
+  stage: coverage
+  artifacts:
+    paths:
+      - dist/
+      - node_modules/
+      - package.json
+  before_script:
+    - npm install --progress=false
+  script:
+    - npm run coverage
+  after_script:
+    - SUFFIX=$RANDOM
+    - curl "http://api.secoder.net/static/sonar-scanner.tar.gz" -s -o "/tmp/sonar-$SUFFIX.tar.gz"
+    - tar -xf "/tmp/sonar-$SUFFIX.tar.gz" -C /opt
+    - /opt/sonar-scanner/bin/sonar-scanner  -Dsonar.projectKey=untitled:untitled-frontend -Dsonar.sources=.  -Dsonar.host.url=https://sonarqube.secoder.net  -Dsonar.login=d65af71f5257f6fba79dd1474d7a134058764a1e
+
+style-test:
+  stage: test
+  allow_failure: true
+  before_script:
+    - npm install --progress=false
+  script:
+    - npm run lint
+  artifacts:
+    paths:
+      - dist/
+      - node_modules/
+      - package.json
